@@ -25,7 +25,8 @@ namespace ClientHub.Api
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
-            }
+                SeedData.Seed(db);
+            }           
 
             app.UseSwagger();
             app.UseSwaggerUI();
