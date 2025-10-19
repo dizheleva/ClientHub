@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36603.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientHub.Api", "ClientHub.Api\ClientHub.Api.csproj", "{F93D66D6-646E-4F34-A967-155DC34A0229}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "ClientHub.React", "ClientHub.React\ClientHub.React.esproj", "{B6B776B3-2EAB-5DFF-062D-5929D7909591}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "clienthub.react", "ClientHub.React\clienthub.react.esproj", "{B6B776B3-2EAB-5DFF-062D-5929D7909591}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
