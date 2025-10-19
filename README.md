@@ -100,10 +100,14 @@ npm run dev
 
 ---
 
-## 📸 Preview
-  
-Example:  
-![ClientHub UI Preview](./screenshot.png)
+## 📸 Screenshots
+
+### Dashboard / Clients List
+![Clients List](./screenshots/clients-list.png)
+
+### Client Details & Interactions
+![Client Details](./screenshots/client-details.png)
+
 
 ---
 
