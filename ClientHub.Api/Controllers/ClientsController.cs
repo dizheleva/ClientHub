@@ -1,5 +1,8 @@
 ﻿namespace ClientHub.Api.Controllers
 {
+    using AutoMapper;
+    using AutoMapper.QueryableExtensions;
+    using ClientHub.Api.Dtos;
     using ClientHub.Api.Models;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
@@ -9,10 +12,16 @@
     public class ClientsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public ClientsController(AppDbContext db) => _context = db;
+        private readonly IMapper _mapper;
+
+        public ClientsController(AppDbContext db, IMapper mapper)
+        {
+            _context = db;
+            _mapper = mapper;
+        }
 
         [HttpGet]
-        public async Task<ActionResult<PagedResult<Client>>> GetAll(
+        public async Task<ActionResult<PagedResult<ClientDto>>> GetAll(
             [FromQuery] string? q = null,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
@@ -49,9 +58,10 @@
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .ProjectTo<ClientDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
 
-            var result = new PagedResult<Client>
+            var result = new PagedResult<ClientDto>
             {
                 Items = items,
                 Total = total,
@@ -63,37 +73,35 @@
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Client>> Get(int id)
+        public async Task<ActionResult<ClientDto>> Get(int id)
         {
             var client = await _context.Clients
                 .Include(c => c.Interactions)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            return client is null ? NotFound() : Ok(client);
+            return client is null ? NotFound() : Ok(_mapper.Map<ClientDto>(client));
         }
 
         [HttpPost]
-        public async Task<ActionResult<Client>> Create([FromBody] Client c)
+        public async Task<ActionResult<ClientDto>> Create([FromBody] CreateClientDto dto)
         {
-            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            var entity = _mapper.Map<Client>(dto);
 
-            _context.Clients.Add(c);
+            _context.Clients.Add(entity);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(Get), new { id = c.Id }, c);
+            var result = _mapper.Map<ClientDto>(entity);
+            return CreatedAtAction(nameof(Get), new { id = entity.Id }, result);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Client update)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateClientDto dto)
         {
             var c = await _context.Clients.FindAsync(id);
             if (c is null) return NotFound();
 
-            c.Name = update.Name;
-            c.Email = update.Email;
-            c.Company = update.Company;
-            c.Phone = update.Phone;
-            c.Notes = update.Notes;
+            _mapper.Map(dto, c);
 
             await _context.SaveChangesAsync();
             return NoContent();
