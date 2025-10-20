@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
+import { useToast } from "../ui/Toast.jsx";
 
 export default function ClientDetails() {
     const { id } = useParams();
@@ -11,6 +12,8 @@ export default function ClientDetails() {
     const [interactions, setInteractions] = useState([]);
 
     const [form, setForm] = useState({ type: "Call", summary: "" });
+
+    const toast = useToast();
 
     async function load() {
         try {
@@ -39,9 +42,11 @@ export default function ClientDetails() {
         try {
             setError(null);
             await api.post(`/api/clients/${id}/interactions`, form);
+            toast.success("Interaction added");
             setForm({ type: "Call", summary: "" });
             await load();
         } catch (e) {
+            toast.error(title);
             const title = e?.response?.data?.title || "Failed to add interaction";
             const details = e?.response?.data?.errors
                 ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")

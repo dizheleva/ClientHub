@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+ï»¿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import { useToast } from "../ui/Toast.jsx";
 
 export default function Clients() {
     const navigate = useNavigate();
@@ -9,8 +10,16 @@ export default function Clients() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const toast = useToast();
+
     // Data
     const [items, setItems] = useState([]);
+
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [sort, setSort] = useState("name");
+    const [dir, setDir] = useState("asc");
+    const [total, setTotal] = useState(0);
 
     // Search (debounced)
     const [q, setQ] = useState("");
@@ -22,12 +31,21 @@ export default function Clients() {
     // Edit state
     const [editingClient, setEditingClient] = useState(null);
 
-    async function loadClients(query) {
+    async function loadClients(queryQ) {
         try {
             setError(null);
             setLoading(true);
-            const res = await api.get("/api/clients", { params: query ? { q: query } : {} });
-            setItems(res.data);
+            const res = await api.get("/api/clients", {
+                params: {
+                    q: queryQ ?? q.trim(),
+                    page,
+                    pageSize,
+                    sort,
+                    dir
+                }
+            });
+            setItems(res.data.items);
+            setTotal(res.data.total);
         } catch (e) {
             setError(e?.response?.data?.title || e.message || "Failed to load clients");
         } finally {
@@ -35,27 +53,48 @@ export default function Clients() {
         }
     }
 
-    useEffect(() => { loadClients(); }, []);
+
     useEffect(() => {
-        const id = setTimeout(() => loadClients(q.trim()), 400);
+        loadClients();
+    }, [page, pageSize, sort, dir]);
+
+    useEffect(() => {
+        const id = setTimeout(() => { setPage(1); loadClients(q.trim()) }, 400);
         return () => clearTimeout(id);
     }, [q]);
+
+    // Sort
+    function toggleSort(col) {
+        if (sort === col) {
+            setDir(dir === "asc" ? "desc" : "asc");
+        } else {
+            setSort(col);
+            setDir("asc");
+        }
+        setPage(1);
+    }
+    function sortIndicator(col) {
+        if (sort !== col) return "";
+        return dir === "asc" ? " â–²" : " â–¼";
+    }
+
 
     // Create
     async function createClient(e) {
         e.preventDefault();
         if (!form.name.trim()) { setError("Name is required."); return; }
         try {
-            setError(null);
             await api.post("/api/clients", form);
+            toast.success("Client created");
             setForm(emptyForm);
             await loadClients(q.trim());
         } catch (e) {
+            toast.error(title);
             const title = e?.response?.data?.title || "Failed to create client";
             const details = e?.response?.data?.errors
                 ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")
                 : "";
-            setError(details ? `${title} — ${details}` : title);
+            setError(details ? `${title} â€” ${details}` : title);
         }
     }
 
@@ -85,15 +124,17 @@ export default function Clients() {
                 company: form.company,
                 notes: form.notes,
             });
+            toast.success("Client updated");
             setEditingClient(null);
             setForm(emptyForm);
             await loadClients(q.trim());
         } catch (e) {
+            toast.error(title);
             const title = e?.response?.data?.title || "Failed to update client";
             const details = e?.response?.data?.errors
                 ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")
                 : "";
-            setError(details ? `${title} — ${details}` : title);
+            setError(details ? `${title} â€” ${details}` : title);
         }
     }
 
@@ -107,10 +148,11 @@ export default function Clients() {
     async function deleteClient(id) {
         if (!window.confirm("Are you sure you want to delete this client?")) return;
         try {
-            setError(null);
             await api.delete(`/api/clients/${id}`);
+            toast.success("Client deleted");
             await loadClients(q.trim());
         } catch (e) {
+            toast.error("Failed to delete client");
             setError(e?.response?.data?.title || e.message || "Failed to delete client");
         }
     }
@@ -130,7 +172,7 @@ export default function Clients() {
                     <div className="search-bar">
                         <input
                             className="input"
-                            placeholder="Search name / company / email…"
+                            placeholder="Search name / company / emailâ€¦"
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
@@ -190,7 +232,7 @@ export default function Clients() {
                 {error && <div className="error">Error: {error}</div>}
 
                 {loading ? (
-                    <p className="muted">Loading…</p>
+                    <p className="muted">Loadingâ€¦</p>
                 ) : items.length === 0 ? (
                     <p className="muted">No clients yet. Add one using the form above.</p>
                 ) : (
@@ -198,22 +240,31 @@ export default function Clients() {
                         <table className="table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Company</th>
+                                    <th style={{ cursor: 'pointer' }} onClick={() => toggleSort("name")}>
+                                        Name{sortIndicator("name")}
+                                    </th>
+                                    <th style={{ cursor: 'pointer' }} onClick={() => toggleSort("email")}>
+                                        Email{sortIndicator("email")}
+                                    </th>
+                                    <th style={{ cursor: 'pointer' }} onClick={() => toggleSort("phone")}>
+                                        Phone{sortIndicator("phone")}
+                                    </th>
+                                    <th style={{ cursor: 'pointer' }} onClick={() => toggleSort("company")}>
+                                        Company{sortIndicator("company")}
+                                    </th>
                                     <th>Notes</th>
                                     <th></th>
                                 </tr>
                             </thead>
+
                             <tbody>
                                 {items.map((c) => (
                                     <tr key={c.id}>
                                         <td>{c.name}</td>
-                                        <td className="muted">{c.email || "—"}</td>
-                                        <td>{c.phone || "—"}</td>
-                                        <td>{c.company || "—"}</td>
-                                        <td className="muted">{c.notes || "—"}</td>
+                                        <td className="muted">{c.email || "â€”"}</td>
+                                        <td>{c.phone || "â€”"}</td>
+                                        <td>{c.company || "â€”"}</td>
+                                        <td className="muted">{c.notes || "â€”"}</td>
                                         <td className="actions" style={{ whiteSpace: "nowrap" }}>
                                             <button className="open" onClick={() => openDetails(c.id)}>Open</button>
                                             <button className="ghost" onClick={() => startEdit(c)}>Edit</button>
@@ -223,6 +274,45 @@ export default function Clients() {
                                 ))}
                             </tbody>
                         </table>
+
+                        <div className="row" style={{ justifyContent: 'space-between', marginTop: 10 }}>
+                            <div className="muted">
+                                Total: {total} â€¢ Page {page} of {Math.max(1, Math.ceil(total / pageSize))}
+                            </div>
+                            <div className="row">
+                                <select
+                                    value={pageSize}
+                                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                                    title="Items per page"
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                </select>
+
+                                <button
+                                    className="ghost"
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page <= 1}
+                                    style={{ marginLeft: 8 }}
+                                >
+                                    â—€ Prev
+                                </button>
+                                <button
+                                    className="ghost"
+                                    onClick={() => {
+                                        const last = Math.max(1, Math.ceil(total / pageSize));
+                                        setPage(p => Math.min(last, p + 1));
+                                    }}
+                                    disabled={page >= Math.max(1, Math.ceil(total / pageSize))}
+                                    style={{ marginLeft: 8 }}
+                                >
+                                    Next â–¶
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 )}
             </div>
