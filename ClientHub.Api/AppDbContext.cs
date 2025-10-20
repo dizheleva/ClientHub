@@ -19,6 +19,7 @@
 
             modelBuilder.Entity<Client>().HasIndex(c => c.Email);
             modelBuilder.Entity<Client>().HasIndex(c => c.Company);
+            modelBuilder.Entity<Client>().HasIndex(c => c.Phone);
             modelBuilder.Entity<Interaction>().HasIndex(i => i.CreatedAt);
         }
     }

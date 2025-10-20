@@ -12,6 +12,9 @@
         [StringLength(120), EmailAddress]
         public string? Email { get; set; }
 
+        [StringLength(20), Phone]
+        public string? Phone { get; set; } = string.Empty;
+
         [StringLength(120)]
         public string? Company { get; set; }
 

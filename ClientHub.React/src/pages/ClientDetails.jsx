@@ -5,15 +5,11 @@ import { api } from "../api";
 export default function ClientDetails() {
     const { id } = useParams();
 
-    // UI state
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // Data
     const [client, setClient] = useState(null);
     const [interactions, setInteractions] = useState([]);
 
-    // Interaction form
     const [form, setForm] = useState({ type: "Call", summary: "" });
 
     async function load() {
@@ -35,9 +31,7 @@ export default function ClientDetails() {
         }
     }
 
-    useEffect(() => {
-        load();
-    }, [id]);
+    useEffect(() => { load(); }, [id]);
 
     async function addInteraction(e) {
         e.preventDefault();
@@ -50,9 +44,7 @@ export default function ClientDetails() {
         } catch (e) {
             const title = e?.response?.data?.title || "Failed to add interaction";
             const details = e?.response?.data?.errors
-                ? Object.entries(e.response.data.errors)
-                    .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-                    .join(" | ")
+                ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")
                 : "";
             setError(details ? `${title} — ${details}` : title);
         }
@@ -63,7 +55,6 @@ export default function ClientDetails() {
 
     return (
         <div className="grid">
-            {/* Header */}
             <div className="row" style={{ justifyContent: "space-between" }}>
                 <h2 style={{ margin: 0 }}>{client.name}</h2>
                 <Link to="/clients"><button className="ghost">← Back</button></Link>
@@ -74,11 +65,12 @@ export default function ClientDetails() {
                 <h3 className="section-title">Client Profile</h3>
                 <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
                     <div>
-                        <p><b>Email:</b> <span className="muted">{client.email || "-"}</span></p>
-                        <p><b>Company:</b> <span className="muted">{client.company || "-"}</span></p>
+                        <p><b>Email:</b> <span className="muted">{client.email || "—"}</span></p>
+                        <p><b>Phone:</b> <span className="muted">{client.phone || "—"}</span></p>
                     </div>
                     <div>
-                        <p><b>Notes:</b> <span className="muted">{client.notes || "-"}</span></p>
+                        <p><b>Company:</b> <span className="muted">{client.company || "—"}</span></p>
+                        <p><b>Notes:</b> <span className="muted">{client.notes || "—"}</span></p>
                     </div>
                 </div>
             </div>
@@ -109,13 +101,11 @@ export default function ClientDetails() {
                 </form>
             </div>
 
-            {/* Errors */}
             {error && <div className="error">Error: {error}</div>}
 
-            {/* Interactions list */}
+            {/* Interactions */}
             <div className="card">
                 <h3 className="section-title">Interactions</h3>
-
                 {interactions.length === 0 ? (
                     <p className="muted">No interactions yet.</p>
                 ) : (
@@ -131,13 +121,9 @@ export default function ClientDetails() {
                             <tbody>
                                 {interactions.map((i) => (
                                     <tr key={i.id}>
-                                        <td>
-                                            <span className={`badge type-${i.type}`}>{i.type}</span>
-                                        </td>
-                                        <td className="muted">{i.summary || "-"}</td>
-                                        <td className="muted">
-                                            {i.createdAt ? new Date(i.createdAt).toLocaleString() : "-"}
-                                        </td>
+                                        <td><span className={`badge type-${i.type}`}>{i.type}</span></td>
+                                        <td className="muted">{i.summary || "—"}</td>
+                                        <td className="muted">{i.createdAt ? new Date(i.createdAt).toLocaleString() : "—"}</td>
                                     </tr>
                                 ))}
                             </tbody>
