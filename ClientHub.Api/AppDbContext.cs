@@ -17,6 +17,7 @@
                 .WithMany(c => c.Interactions)
                 .HasForeignKey(i => i.ClientId);
 
+            modelBuilder.Entity<Client>().HasIndex(c => c.Name);
             modelBuilder.Entity<Client>().HasIndex(c => c.Email);
             modelBuilder.Entity<Client>().HasIndex(c => c.Company);
             modelBuilder.Entity<Client>().HasIndex(c => c.Phone);
