@@ -11,18 +11,25 @@ namespace ClientHub.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+                       
+            builder.Services.AddControllers();
 
-            builder.Services.AddDbContext<AppDbContext>(opt =>
-                opt.UseSqlite("Data Source=clienthub.db"));
-
+            // FluentValidation
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddValidatorsFromAssemblyContaining<CreateClientDtoValidator>();
 
+            // AutoMapper
+            builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-            builder.Services.AddControllers();
+            // DbContext
+            builder.Services.AddDbContext<AppDbContext>(opt =>
+               opt.UseSqlite("Data Source=clienthub.db"));
+
+            // Swagger
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // CORS
             builder.Services.AddCors(o =>
                 o.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
