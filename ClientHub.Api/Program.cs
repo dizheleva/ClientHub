@@ -1,6 +1,9 @@
 
 namespace ClientHub.Api
 {
+    using ClientHub.Api.Validation;
+    using FluentValidation;
+    using FluentValidation.AspNetCore;
     using Microsoft.EntityFrameworkCore;
 
     public class Program
@@ -11,6 +14,10 @@ namespace ClientHub.Api
 
             builder.Services.AddDbContext<AppDbContext>(opt =>
                 opt.UseSqlite("Data Source=clienthub.db"));
+
+            builder.Services.AddFluentValidationAutoValidation();
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateClientDtoValidator>();
+
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
