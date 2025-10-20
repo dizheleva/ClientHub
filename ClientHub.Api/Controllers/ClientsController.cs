@@ -12,22 +12,52 @@
         public ClientsController(AppDbContext db) => _context = db;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Client>>> GetAll([FromQuery] string? q = null)
+        public async Task<ActionResult<PagedResult<Client>>> GetAll(
+            [FromQuery] string? q = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sort = "name",
+            [FromQuery] string dir = "asc")
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
             var query = _context.Clients.AsNoTracking().AsQueryable();
 
+            // Search
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var l = q.ToLower();
                 query = query.Where(c =>
                     c.Name.ToLower().Contains(l) ||
                     (c.Company != null && c.Company.ToLower().Contains(l)) ||
-                    (c.Email != null && c.Email.ToLower().Contains(l)));
+                    (c.Email != null && c.Email.ToLower().Contains(l)) ||
+                    (c.Phone != null && c.Phone.ToLower().Contains(l)));
             }
 
-            var result = await query
-                .OrderBy(c => c.Name)
+            // Sort (whitelist for safety)
+            bool asc = dir.Equals("asc", StringComparison.OrdinalIgnoreCase);
+            query = sort.ToLower() switch
+            {
+                "email" => (asc ? query.OrderBy(c => c.Email) : query.OrderByDescending(c => c.Email)),
+                "company" => (asc ? query.OrderBy(c => c.Company) : query.OrderByDescending(c => c.Company)),
+                "phone" => (asc ? query.OrderBy(c => c.Phone) : query.OrderByDescending(c => c.Phone)),
+                "name" or _ => (asc ? query.OrderBy(c => c.Name) : query.OrderByDescending(c => c.Name)),
+            };
+
+            var total = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            var result = new PagedResult<Client>
+            {
+                Items = items,
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
 
             return Ok(result);
         }
@@ -62,7 +92,7 @@
             c.Name = update.Name;
             c.Email = update.Email;
             c.Company = update.Company;
-            c.Phone = update.Phone;   
+            c.Phone = update.Phone;
             c.Notes = update.Notes;
 
             await _context.SaveChangesAsync();
