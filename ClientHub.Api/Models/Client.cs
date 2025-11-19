@@ -13,7 +13,7 @@
         public string? Email { get; set; }
 
         [StringLength(20), Phone]
-        public string? Phone { get; set; } = string.Empty;
+        public string? Phone { get; set; }
 
         [StringLength(120)]
         public string? Company { get; set; }

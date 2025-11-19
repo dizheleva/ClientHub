@@ -89,12 +89,12 @@ export default function Clients() {
             setForm(emptyForm);
             await loadClients(q.trim());
         } catch (e) {
-            toast.error(title);
             const title = e?.response?.data?.title || "Failed to create client";
             const details = e?.response?.data?.errors
                 ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")
                 : "";
             setError(details ? `${title} — ${details}` : title);
+            toast.error(title);
         }
     }
 
@@ -129,12 +129,13 @@ export default function Clients() {
             setForm(emptyForm);
             await loadClients(q.trim());
         } catch (e) {
-            toast.error(title);
+            
             const title = e?.response?.data?.title || "Failed to update client";
             const details = e?.response?.data?.errors
                 ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")
                 : "";
             setError(details ? `${title} — ${details}` : title);
+            toast.error(title);
         }
     }
 

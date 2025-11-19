@@ -15,7 +15,8 @@
             modelBuilder.Entity<Interaction>()
                 .HasOne<Client>()
                 .WithMany(c => c.Interactions)
-                .HasForeignKey(i => i.ClientId);
+                .HasForeignKey(i => i.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Client>().HasIndex(c => c.Name);
             modelBuilder.Entity<Client>().HasIndex(c => c.Email);

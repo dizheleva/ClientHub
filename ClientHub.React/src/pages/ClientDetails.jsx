@@ -46,12 +46,12 @@ export default function ClientDetails() {
             setForm({ type: "Call", summary: "" });
             await load();
         } catch (e) {
-            toast.error(title);
             const title = e?.response?.data?.title || "Failed to add interaction";
             const details = e?.response?.data?.errors
                 ? Object.entries(e.response.data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")
                 : "";
             setError(details ? `${title} — ${details}` : title);
+            toast.error(title);
         }
     }
 
